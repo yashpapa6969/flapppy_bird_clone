@@ -11,10 +11,10 @@ class MyBird extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
         alignment: Alignment(0, (2 * birdY + birdHeight) / (2 - birdHeight)),
-        child: Image.asset(
-          'assets/flyman-removebg-preview.png',
+        child: Image.network(
+          'https://raw.githubusercontent.com/yashpapa6969/mysql-Node-Injection/main/dangecropped.png',
           width: MediaQuery.of(context).size.height * birdWidth / 2,
-          height: MediaQuery.of(context).size.height * 3 / 4 * birdHeight / 2,
+          height: MediaQuery.of(context).size.height * 3 / 4 * birdHeight / 1.5,
           fit: BoxFit.fill,
         ));
   }

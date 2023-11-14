@@ -2,14 +2,28 @@ import 'package:flutter/material.dart';
 
 import 'dart:async';
 
-
 import 'barrier.dart';
 import 'bird.dart';
 import 'coverscreen.dart';
+
 void main() {
-  runApp(const Game());
+  runApp(const MyApp());
 }
 
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Game',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const Game(),
+    );
+  }
+}
 
 class Game extends StatefulWidget {
   const Game({Key? key}) : super(key: key);
@@ -21,6 +35,8 @@ class Game extends StatefulWidget {
 class _Game extends State<Game> {
   // bird variables
   static double birdY = 0;
+  int score = 0;
+
   double initialPos = birdY;
   double height = 0;
   double time = 0;
@@ -40,6 +56,9 @@ class _Game extends State<Game> {
     [0.6, 0.4],
     [0.4, 0.6],
   ];
+  double getBarrierWidth(double screenWidth) => screenWidth * 0.1; // Example: 10% of the screen width
+  double getBarrierHeight(double screenHeight) => screenHeight * 0.3; // Example: 30% of the screen height
+  double getBirdSize(double screenWidth) => screenWidth * 0.1; // Example: bird size as 10% of the screen width
 
   void startGame() {
     gameHasStarted = true;
@@ -55,14 +74,17 @@ class _Game extends State<Game> {
       if (birdIsDead()) {
         timer.cancel();
         _showDialog();
-      }
-
-
-      else {
+      } else {
         moveMap();
       }
 
       time += 0.01;
+    });
+  }
+
+  void incrementScore() {
+    setState(() {
+      score += 1;
     });
   }
 
@@ -72,8 +94,16 @@ class _Game extends State<Game> {
         barrierX[i] -= 0.005;
       });
 
+      // Check if the barrier is just passing the bird and if so, increment the score
+      // This logic assumes that your bird stays in the center and the barriers move towards the bird
+      if (barrierX[i] < 0 && barrierX[i] + 0.005 >= 0) {
+        incrementScore();
+      }
+
+      // When the barrier goes off the screen, reset its position and possibly increase difficulty
       if (barrierX[i] < -1.5) {
         barrierX[i] += 3;
+        // You could adjust barrierHeight here to increase difficulty
       }
     }
   }
@@ -86,7 +116,6 @@ class _Game extends State<Game> {
       time = 0;
       initialPos = birdY;
       barrierX = [2, 2 + 1.5];
-
     });
   }
 
@@ -95,33 +124,66 @@ class _Game extends State<Game> {
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
-          return AlertDialog(
-            backgroundColor: Colors.brown,
-            title: Center(
-              child: Text(
-                "G A M E  O V E R",
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-            actions: [
-              GestureDetector(
-                onTap: resetGame,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(5),
-                  child: Container(
-                    padding: EdgeInsets.all(7),
-                    color: Colors.white,
+          return score >= 3
+              ? AlertDialog(
+                  backgroundColor: Colors.brown,
+                  title: Center(
                     child: Text(
-                      'Time To Buy Insurance',
-                      style: TextStyle(color: Colors.brown),
+                      "Flag{ILOVEGDSCXYZ}",
+                      style: TextStyle(color: Colors.black),
                     ),
                   ),
-                ),
-              )
-            ],
-          );
+                  actions: [
+                    GestureDetector(
+                      onTap: () {
+                        score = 0;
+                        resetGame();
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(5),
+                        child: Container(
+                          padding: EdgeInsets.all(7),
+                          color: Colors.white,
+                          child: Text(
+                            'Restart',
+                            style: TextStyle(color: Colors.brown),
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
+                )
+              : AlertDialog(
+                  backgroundColor: Colors.brown,
+                  title: Center(
+                    child: Text(
+                      "G A M E  O V E R",
+                      style: TextStyle(color: Colors.black),
+                    ),
+                  ),
+                  actions: [
+                    GestureDetector(
+                      onTap: () {
+                        score = 0;
+                        resetGame();
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(5),
+                        child: Container(
+                          padding: EdgeInsets.all(7),
+                          color: Colors.white,
+                          child: Text(
+                            'Restart',
+                            style: TextStyle(color: Colors.brown),
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
+                );
         });
   }
+
   void _showDialog1() {
     showDialog(
         context: context,
@@ -131,7 +193,7 @@ class _Game extends State<Game> {
             backgroundColor: Colors.brown,
             title: Center(
               child: Text(
-                "Advantages of Insurance",
+                "Restart",
                 style: TextStyle(color: Colors.white),
               ),
             ),
@@ -154,7 +216,6 @@ class _Game extends State<Game> {
           );
         });
   }
-
 
   void jump() {
     setState(() {
@@ -182,15 +243,20 @@ class _Game extends State<Game> {
 
   @override
   Widget build(BuildContext context) {
+    double height = MediaQuery.of(context).size.height;
+    double width = MediaQuery.of(context).size.width;
     return GestureDetector(
       onTap: gameHasStarted ? jump : startGame,
       child: Scaffold(
-
         body: Container(
+          height: height,
+          width: width,
           decoration: BoxDecoration(
             image: DecorationImage(
-                image: AssetImage('assets/nightbg.png'),
-                fit: BoxFit.contain
+
+              image: NetworkImage(
+                  'https://raw.githubusercontent.com/yashpapa6969/mysql-Node-Injection/main/fb-game-background.png'),
+              fit: BoxFit.fitWidth,
             ),
           ),
           child: Column(
@@ -211,16 +277,17 @@ class _Game extends State<Game> {
                         // tap to play
                         MyCoverScreen(gameHasStarted: gameHasStarted),
 
-
                         MyBarrier(
                           barrierX: barrierX[0],
                           barrierWidth: barrierWidth,
                           barrierHeight: barrierHeight[0][0],
                           isThisBottomBarrier: false,
+                          score: score,
                         ),
 
                         // Bottom barrier 0
                         MyBarrier(
+                          score: score,
                           barrierX: barrierX[0],
                           barrierWidth: barrierWidth,
                           barrierHeight: barrierHeight[0][1],
@@ -229,6 +296,7 @@ class _Game extends State<Game> {
 
                         // Top barrier 1
                         MyBarrier(
+                          score: score,
                           barrierX: barrierX[1],
                           barrierWidth: barrierWidth,
                           barrierHeight: barrierHeight[1][0],
@@ -237,6 +305,7 @@ class _Game extends State<Game> {
 
                         // Bottom barrier 1
                         MyBarrier(
+                          score: score,
                           barrierX: barrierX[1],
                           barrierWidth: barrierWidth,
                           barrierHeight: barrierHeight[1][1],
@@ -258,14 +327,16 @@ class _Game extends State<Game> {
                           children: [
                             Text(
                               '0',
-                              style: TextStyle(color: Colors.white, fontSize: 35),
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 35),
                             ),
                             SizedBox(
                               height: 15,
                             ),
                             Text(
                               'S C O R E',
-                              style: TextStyle(color: Colors.white, fontSize: 20),
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 20),
                             ),
                           ],
                         ),
@@ -274,14 +345,16 @@ class _Game extends State<Game> {
                           children: [
                             Text(
                               '10',
-                              style: TextStyle(color: Colors.white, fontSize: 35),
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 35),
                             ),
                             SizedBox(
                               height: 15,
                             ),
                             Text(
                               'B E S T',
-                              style: TextStyle(color: Colors.white, fontSize: 20),
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 20),
                             ),
                           ],
                         ),
